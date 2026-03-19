@@ -1,0 +1,107 @@
+name: Sounding Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_refresh:
+        description: 'Download fresh data?'
+        type: boolean
+        default: false
+  schedule:
+    # Shifted minutes to avoid high-traffic marks
+    - cron: '12,42 * * * *'
+
+# --- FIX 1: Prevent multiple jobs from running at the same time ---
+concurrency:
+  group: weather-data-update
+  cancel-in-progress: false # Let the current one finish, queue the next
+
+jobs:
+  update-weather-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+          # --- NEW STEP: FREE UP DISK SPACE ---
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # Shallow clone to save disk space (avoid downloading huge .git history)
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeccodes-dev
+
+      - name: Install Python Dependencies
+        run: |
+          uv venv
+          uv pip install -r requirements.txt
+
+      - name: Restore cached data from data branch
+        run: |
+          # Pull existing cache_data and cache_data_ch2 from the data branch so that
+          # fetch_data.py / fetch_data_ch2.py see previous runs for retention logic.
+          git fetch --depth=1 origin data 2>/dev/null || echo "data branch not found yet — starting fresh"
+          git checkout FETCH_HEAD -- cache_data/      2>/dev/null || true
+          git checkout FETCH_HEAD -- cache_wind/      2>/dev/null || true
+          git checkout FETCH_HEAD -- cache_data_ch2/  2>/dev/null || true
+          # Unstage immediately — files are needed on disk but must NOT be staged
+          # on the main branch index (causes rebase conflicts in the commit step below)
+          git reset HEAD -- cache_data/ cache_wind/ cache_data_ch2/ manifest.json 2>/dev/null || true
+          echo "CH1 .nc files: $(find cache_data -name '*.nc' 2>/dev/null | wc -l)"
+          echo "CH2 .nc files: $(find cache_data_ch2 -name '*.nc' 2>/dev/null | wc -l)"
+
+      - name: Fetch CH1 Weather Data
+        env:
+          FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
+        run: uv run python fetch_data.py
+
+      - name: Fetch CH2 Weather Data
+        continue-on-error: true
+        run: uv run python fetch_data_ch2.py
+
+      - name: Generate Combined Manifest
+        run: uv run python generate_combined_manifest.py
+
+      - name: Commit and Push Data
+        run: |
+          # Setup Git Config
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+          git config --global http.postBuffer 524288000
+
+          mkdir -p cache_data cache_wind
+
+          # Data branch: single orphan commit — no history accumulation
+          # The app reads all .nc files and manifest.json from this branch at runtime.
+          git checkout --orphan data-temp
+          git rm -rf --cached . 2>/dev/null || true
+          git add -f cache_data/
+          git add -f cache_wind/
+          git add -f cache_data_ch2/
+          git add manifest.json
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Data snapshot: $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push origin HEAD:data --force
+          else
+            echo "No data to push to data branch"
+          fi
+          git checkout -f main
+          git branch -D data-temp

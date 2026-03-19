@@ -1,0 +1,8 @@
+xarray
+cfgrib
+meteodata-lab
+pandas
+netCDF4
+numpy
+requests
+scipy
