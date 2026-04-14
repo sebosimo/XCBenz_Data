@@ -39,9 +39,15 @@ STAC_BASE_URL = "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschwe
 STAC_ASSETS_URL = f"{STAC_BASE_URL}/assets"
 
 WIND_LEVELS = []
+NETCDF_ENGINE = "netcdf4"
+NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
 
 os.makedirs(CACHE_DIR_TRACES, exist_ok=True)
 os.makedirs(CACHE_DIR_MAPS, exist_ok=True)
+
+
+def compressed_encoding(ds):
+    return {name: dict(NETCDF_COMPRESS_KW) for name in ds.data_vars}
 
 def get_iso_horizon(total_hours):
     days = total_hours // 24
@@ -206,7 +212,12 @@ def process_traces(fields, locations, tag, h, ref, rad_scalars=None):
             "horizon": h,
             "valid_time": valid_time.isoformat()
         }
-        ds_out.to_netcdf(path)
+        ds_out.to_netcdf(
+            path,
+            engine=NETCDF_ENGINE,
+            format="NETCDF4",
+            encoding=compressed_encoding(ds_out),
+        )
 
 def process_wind_maps(fields, tag, h_int, ref):
     if "U" not in fields or "V" not in fields or "HHL" not in fields:
@@ -258,7 +269,12 @@ def process_wind_maps(fields, tag, h_int, ref):
                     "horizon": h_int,
                     "valid_time": valid_time.isoformat()
                 }
-                out_ds.to_netcdf(output_path)
+                out_ds.to_netcdf(
+                    output_path,
+                    engine=NETCDF_ENGINE,
+                    format="NETCDF4",
+                    encoding=compressed_encoding(out_ds),
+                )
                 log(f"Saved wind map: {fname}")
             except Exception as e: log(f"Error processing level {lvl['name']}: {e}", "ERROR")
 

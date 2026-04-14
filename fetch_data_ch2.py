@@ -34,12 +34,18 @@ STATIC_DIR       = "static_data"
 MAX_HORIZON      = 120   # H000–H120, full 5-day forecast
 VARS             = ["T", "U", "V", "P", "QV"]
 VARS_RADIATION   = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumulated means)
+NETCDF_ENGINE    = "netcdf4"
+NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
 
 STAC_BASE_URL  = "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-forecasting-icon-ch2"
 STAC_ASSETS_URL = f"{STAC_BASE_URL}/assets"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
+
+
+def compressed_encoding(ds):
+    return {name: dict(NETCDF_COMPRESS_KW) for name in ds.data_vars}
 
 
 def get_iso_horizon(total_hours):
@@ -241,7 +247,12 @@ def process_traces(fields, locations, tag, h, ref, rad_scalars=None):
             "valid_time": valid_time.isoformat(),
             "model": "icon-ch2",
         }
-        ds_out.to_netcdf(path)
+        ds_out.to_netcdf(
+            path,
+            engine=NETCDF_ENGINE,
+            format="NETCDF4",
+            encoding=compressed_encoding(ds_out),
+        )
 
 
 def cleanup_old_runs():
