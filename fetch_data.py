@@ -31,6 +31,7 @@ VARS_TRACES = ["T", "U", "V", "P", "QV"]
 VARS_MAPS = ["U", "V", "HHL"]
 VARS_RADIATION = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumulated means)
 CACHE_DIR_TRACES = "cache_data"
+CACHE_DIR_TRACES_PACKED = "cache_data_packed"
 CACHE_DIR_MAPS = "cache_wind"
 STATIC_DIR = "static_data"
 HHL_FILENAME = "vertical_constants_icon-ch1-eps.grib2"
@@ -43,11 +44,28 @@ NETCDF_ENGINE = "netcdf4"
 NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
 
 os.makedirs(CACHE_DIR_TRACES, exist_ok=True)
+os.makedirs(CACHE_DIR_TRACES_PACKED, exist_ok=True)
 os.makedirs(CACHE_DIR_MAPS, exist_ok=True)
 
 
 def compressed_encoding(ds):
     return {name: dict(NETCDF_COMPRESS_KW) for name in ds.data_vars}
+
+def packed_encoding(ds):
+    encoding = {}
+    for name, data_array in ds.data_vars.items():
+        if data_array.dtype.kind in ("U", "S", "O"):
+            encoding[name] = {}
+        else:
+            enc = dict(NETCDF_COMPRESS_KW)
+            if name == "horizon":
+                enc["dtype"] = "i2"
+            elif name == "valid_time_epoch":
+                enc["dtype"] = "i8"
+            elif np.issubdtype(data_array.dtype, np.floating):
+                enc["dtype"] = "f4"
+            encoding[name] = enc
+    return encoding
 
 def get_iso_horizon(total_hours):
     days = total_hours // 24
@@ -59,6 +77,9 @@ def sanitize_name(name):
             .replace("Ü", "Ue").replace("Ö", "Oe").replace("Ä", "Ae").replace("ß", "ss")
     clean = "".join(c for c in n if c.isalnum() or c in ('-', '_'))
     return clean if clean else "unnamed"
+
+def _step_number(step_label):
+    return int(step_label.replace("H", ""))
 
 def log(msg, level="INFO"):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -152,6 +173,121 @@ def is_run_complete_locally(time_tag, locations, max_h):
     last_loc = sanitize_name(list(locations.keys())[-1])
     trace_path = os.path.join(CACHE_DIR_TRACES, time_tag, last_loc, f"H{max_h:02d}.nc")
     return os.path.exists(trace_path)
+
+def is_packed_run_complete_locally(time_tag, locations):
+    return all(
+        os.path.exists(os.path.join(CACHE_DIR_TRACES_PACKED, time_tag, f"{sanitize_name(name)}.nc"))
+        for name in locations
+    )
+
+def build_packed_dataset_from_hourlies(tag, safe_name, location_name, step_labels):
+    level_height = None
+    profile_columns = {var: [] for var in VARS_TRACES}
+    radiation_columns = {var: [] for var in VARS_RADIATION}
+    valid_time_epochs = []
+    available_steps = []
+    ref_time = None
+
+    for step_label in step_labels:
+        step_path = os.path.join(CACHE_DIR_TRACES, tag, safe_name, f"{step_label}.nc")
+        if not os.path.exists(step_path):
+            continue
+
+        with xr.open_dataset(step_path, engine=NETCDF_ENGINE) as ds_in:
+            ds_loaded = ds_in.load()
+
+        if ref_time is None:
+            ref_time = datetime.datetime.fromisoformat(str(ds_loaded.attrs["ref_time"]))
+
+        height = ds_loaded["HEIGHT"].values.astype(np.float32)
+        if level_height is None:
+            level_height = height
+
+        for var in VARS_TRACES:
+            profile_columns[var].append(ds_loaded[var].values.astype(np.float32))
+
+        for var in VARS_RADIATION:
+            if var in ds_loaded:
+                radiation_columns[var].append(np.float32(ds_loaded[var].values))
+            else:
+                radiation_columns[var].append(np.float32(np.nan))
+
+        valid_attr = ds_loaded.attrs.get("valid_time")
+        if valid_attr:
+            valid_time = datetime.datetime.fromisoformat(str(valid_attr))
+        else:
+            valid_time = ref_time + datetime.timedelta(hours=_step_number(step_label))
+        if valid_time.tzinfo is None:
+            valid_time = valid_time.replace(tzinfo=datetime.timezone.utc)
+        valid_time_epochs.append(int(valid_time.timestamp()))
+        available_steps.append(step_label)
+
+    if not available_steps or level_height is None or ref_time is None:
+        return None
+
+    packed_vars = {
+        "horizon": xr.DataArray(
+            np.asarray([_step_number(step) for step in available_steps], dtype=np.int16),
+            dims=["time"],
+        ),
+        "valid_time_epoch": xr.DataArray(
+            np.asarray(valid_time_epochs, dtype=np.int64),
+            dims=["time"],
+        ),
+        "step_label": xr.DataArray(np.asarray(available_steps), dims=["time"]),
+        "height": xr.DataArray(level_height, dims=["level"]),
+    }
+
+    for var, columns in profile_columns.items():
+        if columns:
+            packed_vars[var] = xr.DataArray(np.stack(columns).astype(np.float32), dims=["time", "level"])
+
+    for var, values in radiation_columns.items():
+        if values and not np.all(np.isnan(values)):
+            packed_vars[var] = xr.DataArray(np.asarray(values, dtype=np.float32), dims=["time"])
+
+    packed_ds = xr.Dataset(packed_vars)
+    packed_ds.attrs = {
+        "location": location_name,
+        "ref_time": ref_time.isoformat(),
+        "model": "icon-ch1",
+        "step_label_pad": 2,
+        "schema_version": 1,
+    }
+    return packed_ds
+
+def write_packed_run_files(tag, locations):
+    run_dir = os.path.join(CACHE_DIR_TRACES, tag)
+    if not os.path.isdir(run_dir):
+        return
+
+    packed_run_dir = os.path.join(CACHE_DIR_TRACES_PACKED, tag)
+    os.makedirs(packed_run_dir, exist_ok=True)
+
+    for location_name in locations:
+        safe_name = sanitize_name(location_name)
+        step_dir = os.path.join(run_dir, safe_name)
+        if not os.path.isdir(step_dir):
+            continue
+        step_labels = sorted(
+            f.replace(".nc", "")
+            for f in os.listdir(step_dir)
+            if f.endswith(".nc") and f.startswith("H")
+        )
+        packed_ds = build_packed_dataset_from_hourlies(tag, safe_name, location_name, step_labels)
+        if packed_ds is None:
+            continue
+
+        packed_path = os.path.join(packed_run_dir, f"{safe_name}.nc")
+        tmp_path = packed_path + ".tmp"
+        packed_ds.to_netcdf(
+            tmp_path,
+            engine=NETCDF_ENGINE,
+            format="NETCDF4",
+            encoding=packed_encoding(packed_ds),
+        )
+        os.replace(tmp_path, packed_path)
+        log(f"Packed CH1 location written: {tag}/{safe_name}.nc")
 
 def process_traces(fields, locations, tag, h, ref, rad_scalars=None):
     sample = list(fields.values())[0]
@@ -337,6 +473,8 @@ def main():
         tag = ref_time.strftime('%Y%m%d_%H%M')
         max_h = 45 if ref_time.hour == 3 else 33
         if is_run_complete_locally(tag, locations, max_h):
+            if not is_packed_run_complete_locally(tag, locations):
+                write_packed_run_files(tag, locations)
             log(f"Run {tag} complete locally."); break
         
         log(f"Processing run: {tag}")
@@ -439,6 +577,7 @@ def main():
 
         if any_success:
             log(f"Run {tag} processing complete.", "NOTICE")
+            write_packed_run_files(tag, locations)
             # Compute thermal forecasts for the newly fetched run
             try:
                 import compute_thermals
@@ -495,7 +634,7 @@ def generate_manifest():
 def cleanup_old_runs():
     now = datetime.datetime.now(datetime.timezone.utc)
     keep_dates = {now.date(), (now - datetime.timedelta(days=1)).date()}
-    for d in [CACHE_DIR_TRACES, CACHE_DIR_MAPS]:
+    for d in [CACHE_DIR_TRACES, CACHE_DIR_TRACES_PACKED, CACHE_DIR_MAPS]:
         if not os.path.exists(d): continue
         all_runs = sorted(
             [item for item in os.listdir(d) if os.path.isdir(os.path.join(d, item))],

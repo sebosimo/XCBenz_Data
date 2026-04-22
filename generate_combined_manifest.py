@@ -12,6 +12,8 @@ import datetime
 
 CACHE_DIR_CH1 = "cache_data"
 CACHE_DIR_CH2 = "cache_data_ch2"
+CACHE_DIR_CH1_PACKED = "cache_data_packed"
+CACHE_DIR_CH2_PACKED = "cache_data_ch2_packed"
 
 
 def log(msg):
@@ -51,10 +53,35 @@ def scan_runs(cache_dir, pad):
 
     return runs
 
+def scan_packed_runs(cache_dir):
+    """
+    Scan a packed cache directory and return {run_tag: [location_names]}.
+    Packed filenames are <Location>.nc.
+    """
+    runs = {}
+    if not os.path.exists(cache_dir):
+        return runs
+
+    for run in sorted(os.listdir(cache_dir), reverse=True):
+        run_path = os.path.join(cache_dir, run)
+        if not os.path.isdir(run_path):
+            continue
+        locations = sorted(
+            f.replace(".nc", "")
+            for f in os.listdir(run_path)
+            if f.endswith(".nc")
+        )
+        if locations:
+            runs[run] = locations
+
+    return runs
+
 
 def main():
     runs_ch1 = scan_runs(CACHE_DIR_CH1, pad=2)
     runs_ch2 = scan_runs(CACHE_DIR_CH2, pad=3)
+    runs_ch1_packed = scan_packed_runs(CACHE_DIR_CH1_PACKED)
+    runs_ch2_packed = scan_packed_runs(CACHE_DIR_CH2_PACKED)
 
     # generated_at: use the newest CH1 run (the "current" model reference)
     generated_at = max(runs_ch1.keys()) if runs_ch1 else (
@@ -63,14 +90,20 @@ def main():
 
     manifest = {
         "generated_at": generated_at,
+        "schema_version": 2,
         "runs": runs_ch1,
         "runs_ch2": runs_ch2,
+        "runs_packed": runs_ch1_packed,
+        "runs_ch2_packed": runs_ch2_packed,
     }
 
     with open("manifest.json", "w") as f:
         json.dump(manifest, f)
 
-    log(f"Manifest written: {len(runs_ch1)} CH1 run(s), {len(runs_ch2)} CH2 run(s)")
+    log(
+        f"Manifest written: {len(runs_ch1)} CH1 run(s), {len(runs_ch2)} CH2 run(s), "
+        f"{len(runs_ch1_packed)} packed CH1 run(s), {len(runs_ch2_packed)} packed CH2 run(s)"
+    )
 
 
 if __name__ == "__main__":
