@@ -180,7 +180,7 @@ def is_packed_run_complete_locally(time_tag, locations):
         for name in locations
     )
 
-def build_packed_dataset_from_hourlies(tag, safe_name, location_name, step_labels):
+def build_packed_dataset_from_hourlies(tag, safe_name, location_name, location_meta, step_labels):
     level_height = None
     profile_columns = {var: [] for var in VARS_TRACES}
     radiation_columns = {var: [] for var in VARS_RADIATION}
@@ -248,7 +248,13 @@ def build_packed_dataset_from_hourlies(tag, safe_name, location_name, step_label
 
     packed_ds = xr.Dataset(packed_vars)
     packed_ds.attrs = {
-        "location": location_name,
+        "location": location_meta.get("display_name", location_name),
+        "location_id": location_name,
+        "display_name": location_meta.get("display_name", location_name),
+        "point_type": location_meta.get("type", "legacy"),
+        "region_name": location_meta.get("region_name") or "",
+        "latitude": float(location_meta["lat"]),
+        "longitude": float(location_meta["lon"]),
         "ref_time": ref_time.isoformat(),
         "model": "icon-ch1",
         "step_label_pad": 2,
@@ -264,7 +270,7 @@ def write_packed_run_files(tag, locations):
     packed_run_dir = os.path.join(CACHE_DIR_TRACES_PACKED, tag)
     os.makedirs(packed_run_dir, exist_ok=True)
 
-    for location_name in locations:
+    for location_name, location_meta in locations.items():
         safe_name = sanitize_name(location_name)
         step_dir = os.path.join(run_dir, safe_name)
         if not os.path.isdir(step_dir):
@@ -274,7 +280,7 @@ def write_packed_run_files(tag, locations):
             for f in os.listdir(step_dir)
             if f.endswith(".nc") and f.startswith("H")
         )
-        packed_ds = build_packed_dataset_from_hourlies(tag, safe_name, location_name, step_labels)
+        packed_ds = build_packed_dataset_from_hourlies(tag, safe_name, location_name, location_meta, step_labels)
         if packed_ds is None:
             continue
 
@@ -342,8 +348,15 @@ def process_traces(fields, locations, tag, h, ref, rad_scalars=None):
 
         ds_out = xr.Dataset(loc_vars)
         valid_time = ref + datetime.timedelta(hours=h)
+        coords = locations[name]
         ds_out.attrs = {
-            "location": name,
+            "location": coords.get("display_name", name),
+            "location_id": name,
+            "display_name": coords.get("display_name", name),
+            "point_type": coords.get("type", "legacy"),
+            "region_name": coords.get("region_name") or "",
+            "latitude": float(coords["lat"]),
+            "longitude": float(coords["lon"]),
             "ref_time": ref.isoformat(),
             "horizon": h,
             "valid_time": valid_time.isoformat()
