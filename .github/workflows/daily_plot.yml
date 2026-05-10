@@ -6,19 +6,19 @@ on:
       force_refresh:
         description: 'Download fresh data?'
         type: boolean
-        default: false
+        default: true
       enable_wind_maps:
         description: 'Generate packed wind-map files?'
         type: boolean
-        default: false
+        default: true
       enable_wind_maps_ch1:
         description: 'Generate CH1 wind maps?'
         type: boolean
-        default: false
+        default: true
       enable_wind_maps_ch2:
         description: 'Generate CH2 wind maps?'
         type: boolean
-        default: false
+        default: true
       wind_map_max_seconds:
         description: 'Wind-map runtime budget in seconds'
         type: string
