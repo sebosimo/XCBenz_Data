@@ -31,6 +31,7 @@ class WindMapTests(unittest.TestCase):
         )
         self.assertEqual(cfg.crop["lon_min"], 5.5)
         self.assertEqual(cfg.crop["lat_max"], 48.2)
+        self.assertEqual(cfg.max_seconds, 0)
 
     def test_config_can_limit_levels_for_manual_trials(self):
         cfg = load_config(env={"WIND_MAP_LEVELS": "800m_AGL,1500m_AMSL"}, log=lambda *_: None)

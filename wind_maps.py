@@ -273,7 +273,8 @@ class WindMapAccumulator:
         self.log = log or _default_log
         self.out_root = out_root
         self.started_at = time.monotonic()
-        self.deadline = self.started_at + max(1.0, float(config.max_seconds))
+        self.wind_elapsed_seconds = 0.0
+        self.max_wind_seconds = float(config.max_seconds)
         self.prepared = False
         self.budget_exceeded = False
         self.failed = False
@@ -289,7 +290,7 @@ class WindMapAccumulator:
         }
 
     def _over_budget(self):
-        if time.monotonic() > self.deadline:
+        if self.max_wind_seconds > 0 and self.wind_elapsed_seconds > self.max_wind_seconds:
             self.budget_exceeded = True
             return True
         return False
@@ -330,10 +331,15 @@ class WindMapAccumulator:
         )
 
     def append(self, fields, horizon, ref_time):
+        wind_start = time.monotonic()
         if horizon % self.config.horizon_stride != 0:
             return False
         if self._over_budget():
-            self.log(f"Wind maps {self.model}: budget exceeded before H+{horizon:03d}; skipping remaining horizons", "WARNING")
+            self.log(
+                f"Wind maps {self.model}: wind budget exceeded before H+{horizon:03d} "
+                f"({self.wind_elapsed_seconds:.1f}s active wind time); skipping remaining horizons",
+                "WARNING",
+            )
             return False
         missing = [name for name in ("U", "V", "HHL") if name not in fields or fields[name] is None]
         if missing:
@@ -365,6 +371,8 @@ class WindMapAccumulator:
             self.failed = True
             self.log(f"Wind maps {self.model}: H+{horizon:03d} failed: {exc}", "WARNING")
             return False
+        finally:
+            self.wind_elapsed_seconds += time.monotonic() - wind_start
 
     def _dataset_for_level(self, level, rec):
         u_stack = np.stack(rec["u"]).astype(np.float32)
@@ -404,11 +412,25 @@ class WindMapAccumulator:
     def finalize(self):
         elapsed = time.monotonic() - self.started_at
         if not any(rec["horizon"] for rec in self.records.values()):
-            self.log(f"Wind maps {self.model}: no horizons accumulated in {elapsed:.1f}s", "INFO")
-            return {"files": 0, "bytes": 0, "elapsed_seconds": elapsed}
+            self.log(
+                f"Wind maps {self.model}: no horizons accumulated "
+                f"(wind={self.wind_elapsed_seconds:.1f}s, wall={elapsed:.1f}s)",
+                "INFO",
+            )
+            return {"files": 0, "bytes": 0, "elapsed_seconds": elapsed, "wind_elapsed_seconds": self.wind_elapsed_seconds}
         if self.budget_exceeded:
-            self.log(f"Wind maps {self.model}: not writing partial files after budget exceed ({elapsed:.1f}s)", "WARNING")
-            return {"files": 0, "bytes": 0, "elapsed_seconds": elapsed, "budget_exceeded": True}
+            self.log(
+                f"Wind maps {self.model}: not writing partial files after wind budget exceed "
+                f"(wind={self.wind_elapsed_seconds:.1f}s, wall={elapsed:.1f}s)",
+                "WARNING",
+            )
+            return {
+                "files": 0,
+                "bytes": 0,
+                "elapsed_seconds": elapsed,
+                "wind_elapsed_seconds": self.wind_elapsed_seconds,
+                "budget_exceeded": True,
+            }
 
         out_dir = os.path.join(self.out_root, self.model, self.run_tag)
         os.makedirs(out_dir, exist_ok=True)
@@ -438,10 +460,16 @@ class WindMapAccumulator:
 
         elapsed = time.monotonic() - self.started_at
         self.log(
-            f"Wind maps {self.model}: complete in {elapsed:.1f}s, files={file_count}, bytes={byte_count}",
+            f"Wind maps {self.model}: complete in {self.wind_elapsed_seconds:.1f}s active wind time "
+            f"({elapsed:.1f}s wall), files={file_count}, bytes={byte_count}",
             "NOTICE",
         )
-        return {"files": file_count, "bytes": byte_count, "elapsed_seconds": elapsed}
+        return {
+            "files": file_count,
+            "bytes": byte_count,
+            "elapsed_seconds": elapsed,
+            "wind_elapsed_seconds": self.wind_elapsed_seconds,
+        }
 
 
 def cleanup_old_wind_runs(model, anchor_hour, log=None, root=CACHE_DIR_WIND_PACKED):

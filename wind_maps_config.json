@@ -9,7 +9,7 @@
   "grid_spacing_deg": 0.02,
   "source_padding_deg": 0.2,
   "horizon_stride": 1,
-  "max_seconds": 300,
+  "max_seconds": 0,
   "levels": [
     {
       "name": "10m_AGL",

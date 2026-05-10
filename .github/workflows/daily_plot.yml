@@ -20,9 +20,9 @@ on:
         type: boolean
         default: true
       wind_map_max_seconds:
-        description: 'Wind-map runtime budget in seconds'
+        description: 'Wind-map active-processing budget in seconds (0 disables)'
         type: string
-        default: '300'
+        default: '0'
   schedule:
     # Shifted minutes to avoid high-traffic marks
     - cron: '12,42 * * * *'
@@ -97,7 +97,7 @@ jobs:
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
           ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'false' }}
           ENABLE_WIND_MAPS_CH1: ${{ github.event.inputs.enable_wind_maps_ch1 || 'false' }}
-          WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '300' }}
+          WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '0' }}
         run: uv run python fetch_data.py
 
       - name: Fetch CH2 Weather Data
@@ -106,7 +106,7 @@ jobs:
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
           ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'false' }}
           ENABLE_WIND_MAPS_CH2: ${{ github.event.inputs.enable_wind_maps_ch2 || 'false' }}
-          WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '300' }}
+          WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '0' }}
         run: uv run python fetch_data_ch2.py
 
       - name: Generate Combined Manifest
