@@ -22,6 +22,13 @@ if defs_to_use:
     os.environ["ECCODES_DEFINITION_PATH"] = final_def_path
 
 from meteodatalab import ogd_api
+from wind_maps import (
+    CACHE_DIR_WIND_PACKED,
+    WindMapAccumulator,
+    cleanup_old_wind_runs,
+    is_wind_maps_enabled,
+    load_config as load_wind_map_config,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -31,6 +38,7 @@ HHL_FILENAME     = "vertical_constants_icon-ch2-eps.grib2"
 HGRID_FILENAME   = "horizontal_constants_icon-ch2-eps.grib2"
 CACHE_DIR        = "cache_data_ch2"
 CACHE_DIR_PACKED = "cache_data_ch2_packed"
+CACHE_DIR_MAPS_PACKED = CACHE_DIR_WIND_PACKED
 STATIC_DIR       = "static_data"
 MAX_HORIZON      = 120   # H000–H120, full 5-day forecast
 VARS             = ["T", "U", "V", "P", "QV"]
@@ -43,6 +51,7 @@ STAC_ASSETS_URL = f"{STAC_BASE_URL}/assets"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR_PACKED, exist_ok=True)
+os.makedirs(CACHE_DIR_MAPS_PACKED, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
 
@@ -80,6 +89,13 @@ def sanitize_name(name):
 
 def _step_number(step_label):
     return int(step_label.replace("H", ""))
+
+
+def env_flag(name, default=False):
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def log(msg, level="INFO"):
@@ -439,6 +455,21 @@ def cleanup_old_runs():
 
 def main():
     log("=== CH2 Data Fetcher Start ===")
+    force_refresh = env_flag("FORCE_REFRESH", default=False)
+    if force_refresh:
+        log("FORCE_REFRESH enabled: existing CH2 run/horizon-complete checks will be ignored.", "NOTICE")
+
+    wind_config = None
+    wind_enabled = is_wind_maps_enabled("ch2")
+    if wind_enabled:
+        try:
+            wind_config = load_wind_map_config(log=log)
+            log("CH2 wind-map generation enabled for this run.", "NOTICE")
+        except Exception as e:
+            wind_enabled = False
+            log(f"CH2 wind-map generation disabled: {e}", "WARNING")
+    else:
+        log("CH2 wind-map generation disabled by flags.")
 
     download_static_files()
 
@@ -468,7 +499,7 @@ def main():
 
     for ref_time in runs:
         tag = ref_time.strftime('%Y%m%d_%H%M')
-        if is_run_complete_locally(tag, locations, MAX_HORIZON):
+        if not force_refresh and is_run_complete_locally(tag, locations, MAX_HORIZON):
             if not is_packed_run_complete_locally(tag, locations):
                 write_packed_run_files(tag, locations)
             log(f"CH2 run {tag} already complete locally — skipping.")
@@ -476,12 +507,17 @@ def main():
 
         log(f"Processing CH2 run: {tag} (H000–H{MAX_HORIZON:03d})")
         any_success = False
+        wind_accumulator = (
+            WindMapAccumulator("ch2", tag, ref_time, wind_config, log=log)
+            if wind_enabled and wind_config is not None
+            else None
+        )
         # Cache previous raw radiation values for de-accumulation (running mean → hourly mean)
         prev_rad_raw = {var: None for var in VARS_RADIATION}
 
         for h in range(MAX_HORIZON + 1):
             # Skip horizons where all location .nc files are already on disk
-            if is_horizon_complete_locally(tag, locations, h):
+            if not force_refresh and is_horizon_complete_locally(tag, locations, h):
                 any_success = True   # count existing horizons toward run completion
                 continue
 
@@ -570,11 +606,15 @@ def main():
                     # Locations without radiation (fallback — none expected)
                 else:
                     process_traces(fields, locations, tag, h, ref_time)
+                if wind_accumulator is not None:
+                    wind_accumulator.append(fields, h, ref_time)
                 log(f"CH2 H+{h:03d} done")
                 any_success = True
 
         if any_success:
             log(f"CH2 run {tag} complete.", "NOTICE")
+            if wind_accumulator is not None:
+                wind_accumulator.finalize()
             write_packed_run_files(tag, locations)
             # Compute thermal forecasts for the newly fetched CH2 run
             try:
@@ -595,6 +635,7 @@ def main():
                     pass
 
     cleanup_old_runs()
+    cleanup_old_wind_runs("ch2", anchor_hour=0, log=log)
     log("=== CH2 Data Fetcher Complete ===", "NOTICE")
 
 

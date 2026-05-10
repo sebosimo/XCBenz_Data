@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "crop": {
+    "lon_min": 5.5,
+    "lon_max": 11.0,
+    "lat_min": 45.5,
+    "lat_max": 48.2
+  },
+  "grid_spacing_deg": 0.02,
+  "source_padding_deg": 0.2,
+  "horizon_stride": 1,
+  "max_seconds": 300,
+  "levels": [
+    {
+      "name": "10m_AGL",
+      "h": 10,
+      "type": "AGL",
+      "enabled": true
+    },
+    {
+      "name": "800m_AGL",
+      "h": 800,
+      "type": "AGL",
+      "enabled": true
+    },
+    {
+      "name": "1500m_AMSL",
+      "h": 1500,
+      "type": "AMSL",
+      "enabled": true
+    },
+    {
+      "name": "2000m_AMSL",
+      "h": 2000,
+      "type": "AMSL",
+      "enabled": true
+    },
+    {
+      "name": "3000m_AMSL",
+      "h": 3000,
+      "type": "AMSL",
+      "enabled": true
+    },
+    {
+      "name": "4000m_AMSL",
+      "h": 4000,
+      "type": "AMSL",
+      "enabled": true
+    }
+  ]
+}

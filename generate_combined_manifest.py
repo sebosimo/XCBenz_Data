@@ -8,12 +8,14 @@ unified manifest.json that app.py reads at runtime.
 import os
 import json
 import datetime
+import xarray as xr
 
 
 CACHE_DIR_CH1 = "cache_data"
 CACHE_DIR_CH2 = "cache_data_ch2"
 CACHE_DIR_CH1_PACKED = "cache_data_packed"
 CACHE_DIR_CH2_PACKED = "cache_data_ch2_packed"
+CACHE_DIR_WIND_PACKED = "cache_wind_packed"
 
 
 def log(msg):
@@ -77,11 +79,73 @@ def scan_packed_runs(cache_dir):
     return runs
 
 
+def _format_horizons(values, pad):
+    return [f"H{int(value):0{pad}d}" for value in values]
+
+
+def scan_wind_maps(cache_dir=CACHE_DIR_WIND_PACKED):
+    """
+    Scan packed wind-map files and return manifest-ready entries.
+
+    Layout:
+      cache_wind_packed/{model}/{run}/Wind_{type}_{level}.nc
+    Only fully written .nc files with u/v and horizon coordinates are emitted.
+    """
+    wind_maps = {}
+    if not os.path.exists(cache_dir):
+        return wind_maps
+
+    for model in ("ch1", "ch2"):
+        model_dir = os.path.join(cache_dir, model)
+        if not os.path.isdir(model_dir):
+            continue
+        model_runs = {}
+        pad = 3 if model == "ch2" else 2
+        for run in sorted(os.listdir(model_dir), reverse=True):
+            run_path = os.path.join(model_dir, run)
+            if not os.path.isdir(run_path):
+                continue
+            levels = {}
+            for filename in sorted(os.listdir(run_path)):
+                if not filename.endswith(".nc"):
+                    continue
+                path = os.path.join(run_path, filename)
+                rel_path = os.path.relpath(path, ".").replace(os.sep, "/")
+                try:
+                    with xr.open_dataset(path, engine="netcdf4") as ds:
+                        if "u" not in ds or "v" not in ds or "horizon" not in ds:
+                            continue
+                        level_name = str(ds.attrs.get("level_name") or filename.replace(".nc", ""))
+                        horizons = _format_horizons(ds["horizon"].values, pad)
+                        if not horizons:
+                            continue
+                        levels[level_name] = {
+                            "path": rel_path,
+                            "horizons": horizons,
+                            "encoding": str(ds.attrs.get("encoding", "int16_scale_0.1_ms")),
+                            "level_type": str(ds.attrs.get("level_type", "")),
+                            "level_h": float(ds.attrs.get("level_h", 0.0)),
+                            "size_bytes": os.path.getsize(path),
+                        }
+                except Exception as exc:
+                    log(f"Skipping invalid wind-map file {rel_path}: {exc}")
+            if levels:
+                model_runs[run] = {
+                    "layout": "packed_by_level",
+                    "levels": levels,
+                }
+        if model_runs:
+            wind_maps[model] = model_runs
+
+    return wind_maps
+
+
 def main():
     runs_ch1 = scan_runs(CACHE_DIR_CH1, pad=2)
     runs_ch2 = scan_runs(CACHE_DIR_CH2, pad=3)
     runs_ch1_packed = scan_packed_runs(CACHE_DIR_CH1_PACKED)
     runs_ch2_packed = scan_packed_runs(CACHE_DIR_CH2_PACKED)
+    wind_maps = scan_wind_maps()
 
     # generated_at: use the newest CH1 run (the "current" model reference)
     generated_at = max(runs_ch1.keys()) if runs_ch1 else (
@@ -90,11 +154,12 @@ def main():
 
     manifest = {
         "generated_at": generated_at,
-        "schema_version": 2,
+        "schema_version": 3,
         "runs": runs_ch1,
         "runs_ch2": runs_ch2,
         "runs_packed": runs_ch1_packed,
         "runs_ch2_packed": runs_ch2_packed,
+        "wind_maps": wind_maps,
     }
 
     with open("manifest.json", "w") as f:
@@ -102,7 +167,8 @@ def main():
 
     log(
         f"Manifest written: {len(runs_ch1)} CH1 run(s), {len(runs_ch2)} CH2 run(s), "
-        f"{len(runs_ch1_packed)} packed CH1 run(s), {len(runs_ch2_packed)} packed CH2 run(s)"
+        f"{len(runs_ch1_packed)} packed CH1 run(s), {len(runs_ch2_packed)} packed CH2 run(s), "
+        f"{sum(len(runs) for runs in wind_maps.values())} wind-map run(s)"
     )
 
 

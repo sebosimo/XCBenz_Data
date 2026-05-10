@@ -22,6 +22,13 @@ if defs_to_use:
     os.environ["ECCODES_DEFINITION_PATH"] = final_def_path
 
 from meteodatalab import ogd_api
+from wind_maps import (
+    CACHE_DIR_WIND_PACKED,
+    WindMapAccumulator,
+    cleanup_old_wind_runs,
+    is_wind_maps_enabled,
+    load_config as load_wind_map_config,
+)
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -33,6 +40,7 @@ VARS_RADIATION = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumu
 CACHE_DIR_TRACES = "cache_data"
 CACHE_DIR_TRACES_PACKED = "cache_data_packed"
 CACHE_DIR_MAPS = "cache_wind"
+CACHE_DIR_MAPS_PACKED = CACHE_DIR_WIND_PACKED
 STATIC_DIR = "static_data"
 HHL_FILENAME = "vertical_constants_icon-ch1-eps.grib2"
 HGRID_FILENAME = "horizontal_constants_icon-ch1-eps.grib2"
@@ -46,6 +54,7 @@ NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
 os.makedirs(CACHE_DIR_TRACES, exist_ok=True)
 os.makedirs(CACHE_DIR_TRACES_PACKED, exist_ok=True)
 os.makedirs(CACHE_DIR_MAPS, exist_ok=True)
+os.makedirs(CACHE_DIR_MAPS_PACKED, exist_ok=True)
 
 
 def compressed_encoding(ds):
@@ -80,6 +89,12 @@ def sanitize_name(name):
 
 def _step_number(step_label):
     return int(step_label.replace("H", ""))
+
+def env_flag(name, default=False):
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 def log(msg, level="INFO"):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -449,18 +464,21 @@ def _process_traces_with_radiation(fields, locations, tag, h, ref, loc_rad_map):
 
 def main():
     log("Main start...")
-    
-    # Load WIND_LEVELS from JSON
-    global WIND_LEVELS
-    try:
-        if os.path.exists("wind_levels.json"):
-            with open("wind_levels.json", "r") as f:
-                WIND_LEVELS = json.load(f)
-            log(f"Loaded {len(WIND_LEVELS)} wind levels from config.")
-        else:
-            log("Warning: wind_levels.json not found! Wind maps will be skipped.", "WARNING")
-    except Exception as e:
-        log(f"Error loading wind_levels.json: {e}", "ERROR")
+    force_refresh = env_flag("FORCE_REFRESH", default=False)
+    if force_refresh:
+        log("FORCE_REFRESH enabled: existing CH1 run-complete checks will be ignored.", "NOTICE")
+
+    wind_config = None
+    wind_enabled = is_wind_maps_enabled("ch1")
+    if wind_enabled:
+        try:
+            wind_config = load_wind_map_config(log=log)
+            log("CH1 wind-map generation enabled for this run.", "NOTICE")
+        except Exception as e:
+            wind_enabled = False
+            log(f"CH1 wind-map generation disabled: {e}", "WARNING")
+    else:
+        log("CH1 wind-map generation disabled by flags.")
 
     download_static_files()
     if not os.path.exists("locations.json"): return
@@ -485,13 +503,18 @@ def main():
     for ref_time in runs:
         tag = ref_time.strftime('%Y%m%d_%H%M')
         max_h = 45 if ref_time.hour == 3 else 33
-        if is_run_complete_locally(tag, locations, max_h):
+        if not force_refresh and is_run_complete_locally(tag, locations, max_h):
             if not is_packed_run_complete_locally(tag, locations):
                 write_packed_run_files(tag, locations)
             log(f"Run {tag} complete locally."); break
         
         log(f"Processing run: {tag}")
         any_success = False
+        wind_accumulator = (
+            WindMapAccumulator("ch1", tag, ref_time, wind_config, log=log)
+            if wind_enabled and wind_config is not None
+            else None
+        )
         # Cache previous raw radiation values for de-accumulation (running mean → hourly mean)
         # Formula: hourly_mean[n→n+1h] = (n+1)*raw[n+1h] - n*raw[nh]
         prev_rad_raw = {var: None for var in VARS_RADIATION}   # raw cumulative means
@@ -584,12 +607,15 @@ def main():
                     _process_traces_with_radiation(fields, locations, tag, h, ref_time, loc_rad_map)
                 else:
                     process_traces(fields, locations, tag, h, ref_time)
-                # process_wind_maps(fields, tag, h, ref_time)
+                if wind_accumulator is not None:
+                    wind_accumulator.append(fields, h, ref_time)
                 log(f"H+{h:02d} done")
                 any_success = True
 
         if any_success:
             log(f"Run {tag} processing complete.", "NOTICE")
+            if wind_accumulator is not None:
+                wind_accumulator.finalize()
             write_packed_run_files(tag, locations)
             # Compute thermal forecasts for the newly fetched run
             try:
@@ -610,6 +636,7 @@ def main():
                     except: pass
 
     cleanup_old_runs()
+    cleanup_old_wind_runs("ch1", anchor_hour=3, log=log)
     # Manifest is now written by generate_combined_manifest.py (CI step after CH2 fetch)
     log("--- Data Fetcher Complete ---", "NOTICE")
 
