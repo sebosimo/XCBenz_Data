@@ -95,8 +95,8 @@ jobs:
       - name: Fetch CH1 Weather Data
         env:
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
-          ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'false' }}
-          ENABLE_WIND_MAPS_CH1: ${{ github.event.inputs.enable_wind_maps_ch1 || 'false' }}
+          ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'true' }}
+          ENABLE_WIND_MAPS_CH1: ${{ github.event.inputs.enable_wind_maps_ch1 || 'true' }}
           WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '0' }}
         run: uv run python fetch_data.py
 
@@ -104,8 +104,8 @@ jobs:
         continue-on-error: true
         env:
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
-          ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'false' }}
-          ENABLE_WIND_MAPS_CH2: ${{ github.event.inputs.enable_wind_maps_ch2 || 'false' }}
+          ENABLE_WIND_MAPS: ${{ github.event.inputs.enable_wind_maps || 'true' }}
+          ENABLE_WIND_MAPS_CH2: ${{ github.event.inputs.enable_wind_maps_ch2 || 'true' }}
           WIND_MAP_MAX_SECONDS: ${{ github.event.inputs.wind_map_max_seconds || '0' }}
         run: uv run python fetch_data_ch2.py
 
