@@ -52,6 +52,7 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: false
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -112,6 +113,9 @@ jobs:
       - name: Generate Combined Manifest
         run: uv run python generate_combined_manifest.py
 
+      - name: Generate Web Exports
+        run: uv run python generate_web_exports.py
+
       - name: Measure Wind-Map Output
         run: |
           mkdir -p cache_wind_packed
@@ -140,6 +144,7 @@ jobs:
           git add -f cache_data_packed/
           git add -f cache_data_ch2_packed/
           git add manifest.json
+          git add -f web_exports/
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Data snapshot: $(date -u +'%Y-%m-%d %H:%M') UTC"
             git push origin HEAD:data --force
