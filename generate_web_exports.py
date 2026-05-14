@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import math
+import os
 import re
 import shutil
 import stat
@@ -44,6 +45,38 @@ MODELS = (
 
 PROFILE_VARIABLES = ("HEIGHT", "P", "T", "QV", "U", "V")
 RADIATION_VARIABLES = ("ASWDIR_S", "ASWDIFD_S")
+WIND_WEB_DEFAULT_LEVEL = "800m_AGL"
+WIND_WEB_DEFAULT_GRID_STRIDE = 2
+WIND_WEB_SCALE_FACTOR = 0.1
+WIND_WEB_FILL_VALUE = -32768
+WIND_WEB_STYLE = {
+    "source": "XCBenz wind-map style v1",
+    "map_bbox": [5.5, 45.5, 11.0, 48.2],
+    "speed_units": "km/h",
+    "source_speed_units": "kt",
+    "bounds_kt": [0, 4, 6, 10, 14, 18, 22, 26, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100],
+    "display_bounds_kt": [0, 4, 6, 10, 14, 18, 22, 26, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 120],
+    "colors": [
+        "#FFFFFF",
+        "#F3F9E9",
+        "#E4F1D1",
+        "#C6E4A0",
+        "#A8D770",
+        "#FDEB1E",
+        "#F6CD4C",
+        "#F1B24B",
+        "#EB954A",
+        "#E6743A",
+        "#E1002A",
+        "#C8347D",
+        "#A1438E",
+        "#7A4C9F",
+        "#5556AD",
+        "#4669B9",
+        "#7FA0E6",
+        "#BFD0FF",
+    ],
+}
 
 
 def log(message: str) -> None:
@@ -139,6 +172,36 @@ def clean_value(value: Any, precision: int | None = None) -> Any:
     if isinstance(value, (np.datetime64,)):
         return str(value)
     return str(value)
+
+
+def env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return default
+
+
+def selected_wind_web_levels() -> set[str] | None:
+    raw = os.getenv("WIND_WEB_LEVELS")
+    if not raw:
+        return {WIND_WEB_DEFAULT_LEVEL}
+    if raw.strip().lower() == "all":
+        return None
+    levels = {item.strip() for item in raw.split(",") if item.strip()}
+    return levels or {WIND_WEB_DEFAULT_LEVEL}
+
+
+def normalize_step_label(value: Any) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="ignore").strip("\x00")
+    return str(value)
+
+
+def epoch_to_iso(value: Any) -> str:
+    return dt.datetime.fromtimestamp(int(value), tz=dt.timezone.utc).isoformat()
 
 
 def scalar_value(ds: xr.Dataset, name: str, precision: int | None = None) -> Any:
@@ -396,6 +459,204 @@ def write_region_forecast(
     return {"url": rel(path), "steps": steps, "valid_times": valid_times}
 
 
+def wind_model_key(source_key: str) -> str:
+    return "icon-ch1" if source_key == "ch1" else "icon-ch2"
+
+
+def wind_axis_payload(values: np.ndarray, precision: int = 5) -> dict[str, Any]:
+    axis = np.asarray(values, dtype=float)
+    step = float(axis[1] - axis[0]) if len(axis) > 1 else 0.0
+    return {
+        "start": clean_number(axis[0], precision) if len(axis) else None,
+        "end": clean_number(axis[-1], precision) if len(axis) else None,
+        "step": clean_number(step, precision),
+        "count": int(len(axis)),
+        "values": array_to_list(axis, precision),
+    }
+
+
+def raw_wind_component(ds: xr.Dataset, name: str, step_index: int, grid_stride: int) -> np.ndarray:
+    values = np.asarray(ds[name].values[step_index, ::grid_stride, ::grid_stride])
+    if np.issubdtype(values.dtype, np.integer):
+        return values.astype("<i2", copy=False)
+
+    scaled = np.rint(values.astype(float) / WIND_WEB_SCALE_FACTOR)
+    scaled[~np.isfinite(scaled)] = WIND_WEB_FILL_VALUE
+    return np.clip(scaled, -32767, 32767).astype("<i2")
+
+
+def wind_step_summary(u_raw: np.ndarray, v_raw: np.ndarray) -> dict[str, Any]:
+    valid = (u_raw != WIND_WEB_FILL_VALUE) & (v_raw != WIND_WEB_FILL_VALUE)
+    if not np.any(valid):
+        return {"min_speed_ms": None, "max_speed_ms": None}
+
+    u_ms = u_raw[valid].astype(float) * WIND_WEB_SCALE_FACTOR
+    v_ms = v_raw[valid].astype(float) * WIND_WEB_SCALE_FACTOR
+    speed = np.hypot(u_ms, v_ms)
+    return {
+        "min_speed_ms": clean_number(np.nanmin(speed), 2),
+        "max_speed_ms": clean_number(np.nanmax(speed), 2),
+    }
+
+
+def export_wind_level(
+    model_key: str,
+    run_tag: str,
+    level_name: str,
+    source_path: Path,
+    grid_stride: int,
+) -> dict[str, Any]:
+    output_dir = WEB_DIR / "wind_maps" / model_key / run_tag / level_name
+    steps_dir = output_dir / "steps"
+
+    with xr.open_dataset(source_path, mask_and_scale=False) as ds:
+        ds.load()
+        attrs = dict(ds.attrs)
+        lat = np.asarray(ds["latitude"].values[::grid_stride, ::grid_stride], dtype=float)
+        lon = np.asarray(ds["longitude"].values[::grid_stride, ::grid_stride], dtype=float)
+        step_labels = [normalize_step_label(item) for item in np.asarray(ds["step_label"].values).tolist()]
+        horizons = np.asarray(ds["horizon"].values, dtype=int)
+        valid_epochs = np.asarray(ds["valid_time_epoch"].values, dtype=np.int64)
+
+        height, width = lat.shape
+        step_exports: list[dict[str, Any]] = []
+
+        for step_index, step_label in enumerate(step_labels):
+            u_raw = raw_wind_component(ds, "u", step_index, grid_stride)
+            v_raw = raw_wind_component(ds, "v", step_index, grid_stride)
+            interleaved = np.empty(u_raw.size * 2, dtype="<i2")
+            interleaved[0::2] = u_raw.ravel()
+            interleaved[1::2] = v_raw.ravel()
+
+            step_path = steps_dir / f"{step_label}.bin"
+            step_path.parent.mkdir(parents=True, exist_ok=True)
+            step_path.write_bytes(interleaved.tobytes())
+
+            step_exports.append(
+                {
+                    "step": step_label,
+                    "horizon": int(horizons[step_index]),
+                    "valid_time": epoch_to_iso(valid_epochs[step_index]),
+                    "url": rel(step_path),
+                    "byte_length": int(step_path.stat().st_size),
+                    **wind_step_summary(u_raw, v_raw),
+                }
+            )
+
+    metadata_path = output_dir / "metadata.json"
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "product": "wind_map_level",
+        "model": model_key,
+        "run": run_tag,
+        "level": {
+            "name": level_name,
+            "type": attrs.get("level_type"),
+            "height_m": clean_number(attrs.get("level_h"), 1),
+        },
+        "ref_time": attrs.get("ref_time"),
+        "source": rel(source_path),
+        "grid": {
+            "projection": "EPSG:4326",
+            "width": width,
+            "height": height,
+            "source_stride": grid_stride,
+            "lon": wind_axis_payload(lon[0, :]),
+            "lat": wind_axis_payload(lat[:, 0]),
+        },
+        "encoding": {
+            "format": "int16-le-interleaved-u-v",
+            "components": ["u", "v"],
+            "units": "m s-1",
+            "scale_factor": WIND_WEB_SCALE_FACTOR,
+            "add_offset": 0.0,
+            "missing_value": WIND_WEB_FILL_VALUE,
+        },
+        "style": WIND_WEB_STYLE,
+        "steps": step_exports,
+    }
+    write_json(metadata_path, payload, pretty=True)
+
+    return {
+        "metadata": rel(metadata_path),
+        "source": rel(source_path),
+        "level_type": payload["level"]["type"],
+        "level_h": payload["level"]["height_m"],
+        "grid": {
+            "width": width,
+            "height": height,
+            "source_stride": grid_stride,
+        },
+        "steps": step_exports,
+        "step_count": len(step_exports),
+        "bytes": sum(step["byte_length"] for step in step_exports),
+    }
+
+
+def export_wind_maps(source_manifest: dict[str, Any]) -> dict[str, Any] | None:
+    source_wind = source_manifest.get("wind_maps") or {}
+    if not source_wind:
+        return None
+
+    selected_levels = selected_wind_web_levels()
+    grid_stride = env_int("WIND_WEB_GRID_STRIDE", WIND_WEB_DEFAULT_GRID_STRIDE)
+    wind_manifest: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "product": "wind_maps",
+        "default_level": WIND_WEB_DEFAULT_LEVEL,
+        "grid_stride": grid_stride,
+        "level_filter": "all" if selected_levels is None else sorted(selected_levels),
+        "models": {},
+        "counts": {
+            "runs": 0,
+            "levels": 0,
+            "steps": 0,
+            "bytes": 0,
+        },
+    }
+
+    for source_key, source_runs in source_wind.items():
+        model_key = wind_model_key(source_key)
+        model_manifest = {"runs": {}}
+
+        for run_tag, run_entry in source_runs.items():
+            run_manifest = {"layout": "split_binary_by_step", "levels": {}}
+            for level_name, level_entry in (run_entry.get("levels") or {}).items():
+                if selected_levels is not None and level_name not in selected_levels:
+                    continue
+
+                source_path = Path(level_entry.get("path", ""))
+                if not source_path.exists():
+                    log(f"WARN wind source missing for {model_key} {run_tag} {level_name}: {source_path}")
+                    continue
+
+                try:
+                    exported_level = export_wind_level(model_key, run_tag, level_name, source_path, grid_stride)
+                except Exception as exc:
+                    log(f"WARN wind export failed for {source_path}: {exc}")
+                    continue
+
+                run_manifest["levels"][level_name] = exported_level
+                wind_manifest["counts"]["levels"] += 1
+                wind_manifest["counts"]["steps"] += exported_level["step_count"]
+                wind_manifest["counts"]["bytes"] += exported_level["bytes"]
+
+            if run_manifest["levels"]:
+                model_manifest["runs"][run_tag] = run_manifest
+                wind_manifest["counts"]["runs"] += 1
+
+        if model_manifest["runs"]:
+            wind_manifest["models"][model_key] = model_manifest
+
+    if not wind_manifest["models"]:
+        return None
+
+    manifest_path = WEB_DIR / "wind_maps" / "manifest.json"
+    write_json(manifest_path, wind_manifest, pretty=True)
+    wind_manifest["url"] = rel(manifest_path)
+    return wind_manifest
+
+
 def export_model(model: dict[str, Any], locations: dict[str, Any]) -> dict[str, Any]:
     model_key = model["key"]
     cache_dir = model["cache_dir"]
@@ -521,7 +782,9 @@ def main() -> None:
             "region_forecasts": "web_exports/region_forecasts/{model}/{run}/{location_id}.json",
             "emagrams": "web_exports/emagrams/{model}/{run}/{location_id}/{step}.json",
             "thermal_panels": "web_exports/thermal_panels/{model}/{run}/{location_id}.json",
-            "maps": None,
+            "maps": {
+                "wind": None,
+            },
         },
         "models": {},
         "counts": {
@@ -531,10 +794,12 @@ def main() -> None:
             "profiles": 0,
             "thermal_panels": 0,
             "region_forecasts": 0,
+            "wind_map_levels": 0,
+            "wind_map_steps": 0,
         },
         "notes": [
             "Generated from existing NetCDF files; no additional MeteoSwiss downloads are performed.",
-            "Wind/WebP map exports are deferred.",
+            "Wind map exports are split into browser-readable metadata JSON plus lazy-loaded int16 binary u/v slices.",
         ],
     }
 
@@ -545,13 +810,22 @@ def main() -> None:
         manifest["counts"]["thermal_panels"] += model_manifest["counts"]["thermal_panels"]
         manifest["counts"]["region_forecasts"] += model_manifest["counts"]["region_forecasts"]
 
+    wind_manifest = export_wind_maps(source_manifest)
+    if wind_manifest:
+        manifest["products"]["maps"]["wind"] = wind_manifest["url"]
+        manifest["counts"]["wind_map_levels"] = wind_manifest["counts"]["levels"]
+        manifest["counts"]["wind_map_steps"] = wind_manifest["counts"]["steps"]
+    else:
+        manifest["products"]["maps"]["wind"] = None
+
     write_json(WEB_DIR / "manifest.json", manifest, pretty=True)
     validate_manifest(manifest)
     log(
         "Wrote web_exports: "
         f"{manifest['counts']['profiles']} profiles, "
         f"{manifest['counts']['thermal_panels']} thermal panels, "
-        f"{manifest['counts']['region_forecasts']} region forecasts"
+        f"{manifest['counts']['region_forecasts']} region forecasts, "
+        f"{manifest['counts']['wind_map_steps']} wind map steps"
     )
 
 
