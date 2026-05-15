@@ -44,7 +44,7 @@ MODELS = (
 )
 
 PROFILE_VARIABLES = ("HEIGHT", "P", "T", "QV", "U", "V")
-RADIATION_VARIABLES = ("ASWDIR_S", "ASWDIFD_S")
+RADIATION_VARIABLES = ("ASWDIR_S", "ASWDIFD_S", "DURSUN", "DURSUN_M")
 WIND_WEB_DEFAULT_LEVEL = "800m_AGL"
 WIND_WEB_DEFAULT_GRID_STRIDE = 2
 WIND_WEB_SCALE_FACTOR = 0.1
@@ -318,6 +318,8 @@ def export_profile(
         surface = {
             "aswdir_s_wm2": scalar_value(ds, "ASWDIR_S", precision=2),
             "aswdifd_s_wm2": scalar_value(ds, "ASWDIFD_S", precision=2),
+            "sunshine_duration_s": scalar_value(ds, "DURSUN", precision=0),
+            "possible_sunshine_duration_s": scalar_value(ds, "DURSUN_M", precision=0),
         }
         surface = {k: v for k, v in surface.items() if v is not None}
 
@@ -344,6 +346,10 @@ def export_profile(
             "dewpoint_c": "degC",
             "wind_speed_ms": "m s-1",
             "wind_dir_deg": "degrees_from",
+            "aswdir_s_wm2": "W m-2",
+            "aswdifd_s_wm2": "W m-2",
+            "sunshine_duration_s": "s",
+            "possible_sunshine_duration_s": "s",
         },
         "profile": profile,
         "derived": derived,

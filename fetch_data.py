@@ -37,7 +37,16 @@ warnings.filterwarnings("ignore")
 VARS_TRACES = ["T", "U", "V", "P", "QV"]
 VARS_MAPS = ["U", "V", "HHL"]
 VARS_NATIVE_10M_WIND = ["U_10M", "V_10M"]
-VARS_RADIATION = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumulated means)
+VARS_RADIATION_AVERAGE = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (running means from ref time)
+VARS_SUNSHINE_ACCUM = ["DURSUN", "DURSUN_M"]          # sunshine duration / possible max (running sums)
+VARS_SURFACE_SCALARS = [*VARS_RADIATION_AVERAGE, *VARS_SUNSHINE_ACCUM]
+VARS_RADIATION = VARS_SURFACE_SCALARS
+SURFACE_SCALAR_UNITS = {
+    "ASWDIR_S": "W m-2",
+    "ASWDIFD_S": "W m-2",
+    "DURSUN": "s",
+    "DURSUN_M": "s",
+}
 CACHE_DIR_TRACES = "cache_data"
 CACHE_DIR_TRACES_PACKED = "cache_data_packed"
 CACHE_DIR_MAPS = "cache_wind"
@@ -360,7 +369,7 @@ def process_traces(fields, locations, tag, h, ref, rad_scalars=None):
         # Store de-accumulated radiation scalars (if provided)
         if rad_scalars:
             for var, val in rad_scalars.items():
-                loc_vars[var] = xr.DataArray(float(val), attrs={"units": "W m-2"})
+                loc_vars[var] = xr.DataArray(float(val), attrs={"units": SURFACE_SCALAR_UNITS.get(var, "")})
 
         ds_out = xr.Dataset(loc_vars)
         valid_time = ref + datetime.timedelta(hours=h)
@@ -583,7 +592,12 @@ def main():
                                     prev_raw_arr = prev_rad_raw[var]
                                     if prev_raw_arr is None:
                                         prev_raw_arr = np.zeros_like(raw_data)
-                                    deacc_arr = h * raw_data - (h - 1) * prev_raw_arr
+                                    if var in VARS_RADIATION_AVERAGE:
+                                        # Convert running mean from reference time to hourly mean.
+                                        deacc_arr = h * raw_data - (h - 1) * prev_raw_arr
+                                    else:
+                                        # Convert running sum from reference time to interval seconds.
+                                        deacc_arr = raw_data - prev_raw_arr
                                     deacc_arr = np.maximum(deacc_arr, 0.0)   # clip negatives (float16 artifacts)
                                     prev_rad_raw[var] = raw_data   # store for next iteration
                                     # Store as {var: flat_array} — indexed per location below
