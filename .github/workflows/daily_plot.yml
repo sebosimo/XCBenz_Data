@@ -114,6 +114,8 @@ jobs:
         run: uv run python generate_combined_manifest.py
 
       - name: Generate Web Exports
+        env:
+          WIND_WEB_LEVELS: 10m_AGL,800m_AGL,1500m_AMSL,2000m_AMSL,3000m_AMSL,4000m_AMSL
         run: uv run python generate_web_exports.py
 
       - name: Measure Wind-Map Output
