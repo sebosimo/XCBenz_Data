@@ -227,6 +227,22 @@ def _interpolate_vertical(heights, values, target_h):
     return out
 
 
+def _single_level_values(data, spatial_dim):
+    arr = data.squeeze()
+    if spatial_dim not in arr.dims:
+        raise ValueError(f"spatial dimension {spatial_dim!r} not found in {arr.dims}")
+
+    dims = list(arr.dims)
+    spatial_axis = dims.index(spatial_dim)
+    values = np.moveaxis(arr.values, spatial_axis, 0)
+    if values.ndim != 1:
+        values = values.reshape(values.shape[0], -1)
+        if values.shape[-1] != 1:
+            raise ValueError("single-level wind field has unsupported extra dimensions")
+        values = values[:, 0]
+    return values.astype(np.float32, copy=False)
+
+
 class _HorizontalWeights:
     def __init__(self, source_lon, source_lat, target_lon, target_lat):
         points = np.column_stack([source_lon, source_lat])
@@ -354,15 +370,23 @@ class WindMapAccumulator:
             v_all = _level_cell_values(fields["V"], spatial_dim, expected_levels=self.heights_full.shape[0])
             u_source = u_all[:, self.source_indices]
             v_source = v_all[:, self.source_indices]
+            u10_source = v10_source = None
+            if "U_10M" in fields and "V_10M" in fields:
+                u10_source = _single_level_values(fields["U_10M"], spatial_dim)[self.source_indices]
+                v10_source = _single_level_values(fields["V_10M"], spatial_dim)[self.source_indices]
             valid_time = ref_time + datetime.timedelta(hours=int(horizon))
             if valid_time.tzinfo is None:
                 valid_time = valid_time.replace(tzinfo=datetime.timezone.utc)
 
             for level in self.config.enabled_levels:
-                heights = self.heights_full - self.surface_height if level.type == "AGL" else self.heights_full
                 rec = self.records[level.name]
-                rec["u"].append(self.weights.apply(_interpolate_vertical(heights, u_source, level.h)))
-                rec["v"].append(self.weights.apply(_interpolate_vertical(heights, v_source, level.h)))
+                if level.name == "10m_AGL" and u10_source is not None and v10_source is not None:
+                    rec["u"].append(self.weights.apply(u10_source))
+                    rec["v"].append(self.weights.apply(v10_source))
+                else:
+                    heights = self.heights_full - self.surface_height if level.type == "AGL" else self.heights_full
+                    rec["u"].append(self.weights.apply(_interpolate_vertical(heights, u_source, level.h)))
+                    rec["v"].append(self.weights.apply(_interpolate_vertical(heights, v_source, level.h)))
                 rec["horizon"].append(int(horizon))
                 rec["valid_time_epoch"].append(int(valid_time.timestamp()))
                 rec["step_label"].append(f"H{int(horizon):03d}" if self.model == "ch2" else f"H{int(horizon):02d}")

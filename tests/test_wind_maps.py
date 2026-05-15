@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import xarray as xr
 
-from wind_maps import is_wind_maps_enabled, load_config, wind_netcdf_encoding
+from wind_maps import _interpolate_vertical, _single_level_values, is_wind_maps_enabled, load_config, wind_netcdf_encoding
 
 
 class WindMapTests(unittest.TestCase):
@@ -54,6 +54,38 @@ class WindMapTests(unittest.TestCase):
         self.assertAlmostEqual(encoding["u"]["scale_factor"], 0.1)
         self.assertEqual(encoding["horizon"]["dtype"], "i2")
         self.assertEqual(encoding["valid_time_epoch"]["dtype"], "i8")
+
+    def test_interpolation_below_lowest_model_layer_remains_missing(self):
+        heights = np.asarray(
+            [
+                [35.0, 45.0],
+                [110.0, 120.0],
+                [300.0, 320.0],
+            ],
+            dtype=np.float32,
+        )
+        values = np.asarray(
+            [
+                [2.0, 4.0],
+                [6.0, 8.0],
+                [10.0, 12.0],
+            ],
+            dtype=np.float32,
+        )
+
+        result = _interpolate_vertical(heights, values, 10.0)
+
+        self.assertTrue(np.all(np.isnan(result)))
+
+    def test_single_level_values_extracts_native_10m_wind(self):
+        data = xr.DataArray(
+            np.asarray([[1.0, 2.0, 3.0]], dtype=np.float32),
+            dims=("heightAboveGround", "values"),
+        )
+
+        values = _single_level_values(data, "values")
+
+        np.testing.assert_allclose(values, [1.0, 2.0, 3.0])
 
 
 if __name__ == "__main__":

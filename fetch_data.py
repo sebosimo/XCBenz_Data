@@ -36,6 +36,7 @@ warnings.filterwarnings("ignore")
 # --- Configuration ---
 VARS_TRACES = ["T", "U", "V", "P", "QV"]
 VARS_MAPS = ["U", "V", "HHL"]
+VARS_NATIVE_10M_WIND = ["U_10M", "V_10M"]
 VARS_RADIATION = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumulated means)
 CACHE_DIR_TRACES = "cache_data"
 CACHE_DIR_TRACES_PACKED = "cache_data_packed"
@@ -526,7 +527,7 @@ def main():
 
             fields = {"HHL": hhl} if hhl is not None else {}
             has_new_data = False
-            for var in ["T", "U", "V", "P", "QV"]:
+            for var in ["T", "U", "V", "P", "QV", *VARS_NATIVE_10M_WIND]:
                 try:
                     req = ogd_api.Request(collection="ogd-forecasting-icon-ch1", variable=var,
                                          reference_datetime=ref_time, horizon=iso_h, perturbed=False)

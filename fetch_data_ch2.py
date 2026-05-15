@@ -42,6 +42,7 @@ CACHE_DIR_MAPS_PACKED = CACHE_DIR_WIND_PACKED
 STATIC_DIR       = "static_data"
 MAX_HORIZON      = 120   # H000–H120, full 5-day forecast
 VARS             = ["T", "U", "V", "P", "QV"]
+VARS_NATIVE_10M_WIND = ["U_10M", "V_10M"]
 VARS_RADIATION   = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (time-accumulated means)
 NETCDF_ENGINE    = "netcdf4"
 NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
@@ -526,7 +527,7 @@ def main():
             fields = {"HHL": hhl} if hhl is not None else {}
             has_new_data = False
 
-            for var in VARS:
+            for var in [*VARS, *VARS_NATIVE_10M_WIND]:
                 try:
                     req = ogd_api.Request(
                         collection=COLLECTION_CH2,
