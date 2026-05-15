@@ -44,11 +44,12 @@ MODELS = (
 )
 
 PROFILE_VARIABLES = ("HEIGHT", "P", "T", "QV", "U", "V")
-RADIATION_VARIABLES = ("ASWDIR_S", "ASWDIFD_S", "DURSUN", "DURSUN_M")
+RADIATION_VARIABLES = ("ASWDIR_S", "ASWDIFD_S")
 WIND_WEB_DEFAULT_LEVEL = "800m_AGL"
 WIND_WEB_DEFAULT_GRID_STRIDE = 2
 WIND_WEB_SCALE_FACTOR = 0.1
 WIND_WEB_FILL_VALUE = -32768
+SUNSHINE_WEB_DIR = WEB_DIR / "sunshine_maps"
 WIND_WEB_STYLE = {
     "source": "XCBenz wind-map style v1",
     "map_bbox": [5.5, 45.5, 11.0, 48.2],
@@ -318,8 +319,6 @@ def export_profile(
         surface = {
             "aswdir_s_wm2": scalar_value(ds, "ASWDIR_S", precision=2),
             "aswdifd_s_wm2": scalar_value(ds, "ASWDIFD_S", precision=2),
-            "sunshine_duration_s": scalar_value(ds, "DURSUN", precision=0),
-            "possible_sunshine_duration_s": scalar_value(ds, "DURSUN_M", precision=0),
         }
         surface = {k: v for k, v in surface.items() if v is not None}
 
@@ -348,8 +347,6 @@ def export_profile(
             "wind_dir_deg": "degrees_from",
             "aswdir_s_wm2": "W m-2",
             "aswdifd_s_wm2": "W m-2",
-            "sunshine_duration_s": "s",
-            "possible_sunshine_duration_s": "s",
         },
         "profile": profile,
         "derived": derived,
@@ -663,6 +660,112 @@ def export_wind_maps(source_manifest: dict[str, Any]) -> dict[str, Any] | None:
     return wind_manifest
 
 
+def sunshine_model_key(source_key: str) -> str:
+    return "icon-ch1" if source_key == "ch1" else "icon-ch2"
+
+
+def export_sunshine_surface(
+    model_key: str,
+    run_tag: str,
+    source_metadata_path: Path,
+) -> dict[str, Any]:
+    with source_metadata_path.open("r", encoding="utf-8") as f:
+        source_metadata = json.load(f)
+
+    output_dir = SUNSHINE_WEB_DIR / model_key / run_tag / "surface"
+    steps_dir = output_dir / "steps"
+    output_steps: list[dict[str, Any]] = []
+
+    for source_step in source_metadata.get("steps") or []:
+        source_path = Path(str(source_step.get("path", "")))
+        if not source_path.exists():
+            raise FileNotFoundError(f"sunshine step missing: {source_path}")
+        step_label = str(source_step["step"])
+        step_path = steps_dir / f"{step_label}.bin"
+        step_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source_path, step_path)
+        output_step = dict(source_step)
+        output_step.pop("path", None)
+        output_step["url"] = rel(step_path)
+        output_step["byte_length"] = int(step_path.stat().st_size)
+        output_steps.append(output_step)
+
+    metadata_path = output_dir / "metadata.json"
+    metadata = dict(source_metadata)
+    metadata["model"] = model_key
+    metadata["run"] = run_tag
+    metadata["source"] = rel(source_metadata_path)
+    metadata["steps"] = output_steps
+    write_json(metadata_path, metadata, pretty=True)
+
+    return {
+        "metadata": rel(metadata_path),
+        "source": rel(source_metadata_path),
+        "components": metadata.get("encoding", {}).get("components", []),
+        "grid": {
+            "width": metadata.get("grid", {}).get("width"),
+            "height": metadata.get("grid", {}).get("height"),
+        },
+        "steps": output_steps,
+        "step_count": len(output_steps),
+        "bytes": sum(step["byte_length"] for step in output_steps),
+    }
+
+
+def export_sunshine_maps(source_manifest: dict[str, Any]) -> dict[str, Any] | None:
+    source_sunshine = source_manifest.get("sunshine_maps") or {}
+    if not source_sunshine:
+        return None
+
+    sunshine_manifest: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "product": "sunshine_maps",
+        "default_product": "surface",
+        "models": {},
+        "counts": {
+            "runs": 0,
+            "products": 0,
+            "steps": 0,
+            "bytes": 0,
+        },
+    }
+
+    for source_key, source_runs in source_sunshine.items():
+        model_key = sunshine_model_key(source_key)
+        model_manifest = {"runs": {}}
+        for run_tag, run_entry in source_runs.items():
+            run_manifest = {"layout": "split_binary_by_step", "products": {}}
+            for product_name, product_entry in (run_entry.get("products") or {}).items():
+                source_metadata_path = Path(product_entry.get("metadata", ""))
+                if not source_metadata_path.exists():
+                    log(f"WARN sunshine source metadata missing for {model_key} {run_tag}: {source_metadata_path}")
+                    continue
+                try:
+                    exported_product = export_sunshine_surface(model_key, run_tag, source_metadata_path)
+                except Exception as exc:
+                    log(f"WARN sunshine export failed for {source_metadata_path}: {exc}")
+                    continue
+                run_manifest["products"][product_name] = exported_product
+                sunshine_manifest["counts"]["products"] += 1
+                sunshine_manifest["counts"]["steps"] += exported_product["step_count"]
+                sunshine_manifest["counts"]["bytes"] += exported_product["bytes"]
+
+            if run_manifest["products"]:
+                model_manifest["runs"][run_tag] = run_manifest
+                sunshine_manifest["counts"]["runs"] += 1
+
+        if model_manifest["runs"]:
+            sunshine_manifest["models"][model_key] = model_manifest
+
+    if not sunshine_manifest["models"]:
+        return None
+
+    manifest_path = SUNSHINE_WEB_DIR / "manifest.json"
+    write_json(manifest_path, sunshine_manifest, pretty=True)
+    sunshine_manifest["url"] = rel(manifest_path)
+    return sunshine_manifest
+
+
 def export_model(model: dict[str, Any], locations: dict[str, Any]) -> dict[str, Any]:
     model_key = model["key"]
     cache_dir = model["cache_dir"]
@@ -790,6 +893,7 @@ def main() -> None:
             "thermal_panels": "web_exports/thermal_panels/{model}/{run}/{location_id}.json",
             "maps": {
                 "wind": None,
+                "sunshine": None,
             },
         },
         "models": {},
@@ -802,10 +906,13 @@ def main() -> None:
             "region_forecasts": 0,
             "wind_map_levels": 0,
             "wind_map_steps": 0,
+            "sunshine_map_products": 0,
+            "sunshine_map_steps": 0,
         },
         "notes": [
             "Generated from existing NetCDF files; no additional MeteoSwiss downloads are performed.",
             "Wind map exports are split into browser-readable metadata JSON plus lazy-loaded int16 binary u/v slices.",
+            "Sunshine map exports are browser-readable metadata JSON plus lazy-loaded int16 binary sunshine-duration/fraction slices.",
         ],
     }
 
@@ -824,6 +931,14 @@ def main() -> None:
     else:
         manifest["products"]["maps"]["wind"] = None
 
+    sunshine_manifest = export_sunshine_maps(source_manifest)
+    if sunshine_manifest:
+        manifest["products"]["maps"]["sunshine"] = sunshine_manifest["url"]
+        manifest["counts"]["sunshine_map_products"] = sunshine_manifest["counts"]["products"]
+        manifest["counts"]["sunshine_map_steps"] = sunshine_manifest["counts"]["steps"]
+    else:
+        manifest["products"]["maps"]["sunshine"] = None
+
     write_json(WEB_DIR / "manifest.json", manifest, pretty=True)
     validate_manifest(manifest)
     log(
@@ -831,7 +946,8 @@ def main() -> None:
         f"{manifest['counts']['profiles']} profiles, "
         f"{manifest['counts']['thermal_panels']} thermal panels, "
         f"{manifest['counts']['region_forecasts']} region forecasts, "
-        f"{manifest['counts']['wind_map_steps']} wind map steps"
+        f"{manifest['counts']['wind_map_steps']} wind map steps, "
+        f"{manifest['counts']['sunshine_map_steps']} sunshine map steps"
     )
 
 

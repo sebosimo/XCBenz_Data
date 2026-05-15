@@ -22,6 +22,13 @@ if defs_to_use:
     os.environ["ECCODES_DEFINITION_PATH"] = final_def_path
 
 from meteodatalab import ogd_api
+from sunshine_maps import (
+    CACHE_DIR_SUNSHINE_MAPS,
+    SunshineMapAccumulator,
+    cleanup_old_sunshine_runs,
+    is_sunshine_maps_enabled,
+    is_sunshine_run_complete,
+)
 from wind_maps import (
     CACHE_DIR_WIND_PACKED,
     WindMapAccumulator,
@@ -45,13 +52,11 @@ VARS             = ["T", "U", "V", "P", "QV"]
 VARS_NATIVE_10M_WIND = ["U_10M", "V_10M"]
 VARS_RADIATION_AVERAGE = ["ASWDIR_S", "ASWDIFD_S"]   # surface SW radiation (running means from ref time)
 VARS_SUNSHINE_ACCUM = ["DURSUN", "DURSUN_M"]          # sunshine duration / possible max (running sums)
-VARS_SURFACE_SCALARS = [*VARS_RADIATION_AVERAGE, *VARS_SUNSHINE_ACCUM]
-VARS_RADIATION = VARS_SURFACE_SCALARS
+VARS_SUNSHINE_MAPS = [*VARS_RADIATION_AVERAGE, *VARS_SUNSHINE_ACCUM]
+VARS_RADIATION = VARS_RADIATION_AVERAGE
 SURFACE_SCALAR_UNITS = {
     "ASWDIR_S": "W m-2",
     "ASWDIFD_S": "W m-2",
-    "DURSUN": "s",
-    "DURSUN_M": "s",
 }
 NETCDF_ENGINE    = "netcdf4"
 NETCDF_COMPRESS_KW = {"zlib": True, "shuffle": True, "complevel": 4}
@@ -62,6 +67,7 @@ STAC_ASSETS_URL = f"{STAC_BASE_URL}/assets"
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR_PACKED, exist_ok=True)
 os.makedirs(CACHE_DIR_MAPS_PACKED, exist_ok=True)
+os.makedirs(CACHE_DIR_SUNSHINE_MAPS, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
 
@@ -471,15 +477,20 @@ def main():
 
     wind_config = None
     wind_enabled = is_wind_maps_enabled("ch2")
-    if wind_enabled:
+    sunshine_enabled = is_sunshine_maps_enabled("ch2")
+    if wind_enabled or sunshine_enabled:
         try:
             wind_config = load_wind_map_config(log=log)
-            log("CH2 wind-map generation enabled for this run.", "NOTICE")
+            if wind_enabled:
+                log("CH2 wind-map generation enabled for this run.", "NOTICE")
+            if sunshine_enabled:
+                log("CH2 sunshine-map generation enabled for this run.", "NOTICE")
         except Exception as e:
             wind_enabled = False
-            log(f"CH2 wind-map generation disabled: {e}", "WARNING")
+            sunshine_enabled = False
+            log(f"CH2 map generation disabled: {e}", "WARNING")
     else:
-        log("CH2 wind-map generation disabled by flags.")
+        log("CH2 wind/sunshine map generation disabled by flags.")
 
     download_static_files()
 
@@ -509,7 +520,8 @@ def main():
 
     for ref_time in runs:
         tag = ref_time.strftime('%Y%m%d_%H%M')
-        if not force_refresh and is_run_complete_locally(tag, locations, MAX_HORIZON):
+        sunshine_missing = sunshine_enabled and not is_sunshine_run_complete("ch2", tag)
+        if not force_refresh and is_run_complete_locally(tag, locations, MAX_HORIZON) and not sunshine_missing:
             if not is_packed_run_complete_locally(tag, locations):
                 write_packed_run_files(tag, locations)
             log(f"CH2 run {tag} already complete locally — skipping.")
@@ -522,12 +534,17 @@ def main():
             if wind_enabled and wind_config is not None
             else None
         )
+        sunshine_accumulator = (
+            SunshineMapAccumulator("ch2", tag, ref_time, wind_config, log=log)
+            if sunshine_enabled and wind_config is not None
+            else None
+        )
         # Cache previous raw radiation values for de-accumulation (running mean → hourly mean)
-        prev_rad_raw = {var: None for var in VARS_RADIATION}
+        prev_rad_raw = {var: None for var in VARS_SUNSHINE_MAPS}
 
         for h in range(MAX_HORIZON + 1):
             # Skip horizons where all location .nc files are already on disk
-            if not force_refresh and is_horizon_complete_locally(tag, locations, h):
+            if not force_refresh and not sunshine_missing and is_horizon_complete_locally(tag, locations, h):
                 any_success = True   # count existing horizons toward run completion
                 continue
 
@@ -575,7 +592,7 @@ def main():
                 lon_n = 'longitude' if 'longitude' in sample_field.coords else 'lon'
                 lats_f = sample_field[lat_n].values
                 lons_f = sample_field[lon_n].values
-                for var in VARS_RADIATION:
+                for var in VARS_SUNSHINE_MAPS:
                     try:
                         req = ogd_api.Request(
                             collection=COLLECTION_CH2,
@@ -615,12 +632,18 @@ def main():
                         idx_loc = int(np.argmin(
                             (lats_f - coords['lat'])**2 + (lons_f - coords['lon'])**2
                         ))
-                        loc_rad = {v: float(arr.ravel()[idx_loc]) for v, arr in rad_scalars.items()}
+                        loc_rad = {
+                            v: float(arr.ravel()[idx_loc])
+                            for v, arr in rad_scalars.items()
+                            if v in VARS_RADIATION
+                        }
                         process_traces(fields, {name: coords}, tag, h, ref_time,
                                        rad_scalars=loc_rad)
                     # Locations without radiation (fallback — none expected)
                 else:
                     process_traces(fields, locations, tag, h, ref_time)
+                if sunshine_accumulator is not None and rad_scalars and sample_field is not None:
+                    sunshine_accumulator.append(sample_field, rad_scalars, h, ref_time)
                 if wind_accumulator is not None:
                     wind_accumulator.append(fields, h, ref_time)
                 log(f"CH2 H+{h:03d} done")
@@ -630,6 +653,8 @@ def main():
             log(f"CH2 run {tag} complete.", "NOTICE")
             if wind_accumulator is not None:
                 wind_accumulator.finalize()
+            if sunshine_accumulator is not None:
+                sunshine_accumulator.finalize()
             write_packed_run_files(tag, locations)
             # Compute thermal forecasts for the newly fetched CH2 run
             try:
@@ -651,6 +676,7 @@ def main():
 
     cleanup_old_runs()
     cleanup_old_wind_runs("ch2", anchor_hour=0, log=log)
+    cleanup_old_sunshine_runs("ch2", anchor_hour=0, log=log)
     log("=== CH2 Data Fetcher Complete ===", "NOTICE")
 
 
