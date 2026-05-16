@@ -1,0 +1,1151 @@
+{
+  "schema_version": 1,
+  "product": "sunshine_map_surface",
+  "model": "icon-ch2",
+  "run": "20260516_0600",
+  "product_name": "surface",
+  "ref_time": "2026-05-16T06:00:00+00:00",
+  "grid": {
+    "projection": "EPSG:4326",
+    "width": 276,
+    "height": 136,
+    "lon": {
+      "start": 5.5,
+      "end": 10.999994277954102,
+      "step": 0.019999980926513672,
+      "count": 276
+    },
+    "lat": {
+      "start": 45.5,
+      "end": 48.2000617980957,
+      "step": 0.020000457763671875,
+      "count": 136
+    }
+  },
+  "encoding": {
+    "format": "int16-le-interleaved-components",
+    "components": [
+      "sunshine_duration_s",
+      "sunshine_fraction_pct"
+    ],
+    "units": [
+      "s",
+      "%"
+    ],
+    "scale_factor": 1.0,
+    "add_offset": 0.0,
+    "missing_value": -32768
+  },
+  "style": {
+    "map_bbox": [
+      5.5,
+      45.5,
+      11.0,
+      48.2
+    ],
+    "display_component": "sunshine_fraction_pct",
+    "display_units": "%",
+    "bounds_pct": [
+      0,
+      5,
+      15,
+      30,
+      50,
+      70,
+      85,
+      100
+    ],
+    "colors": [
+      "#f6f7f0",
+      "#fff7b8",
+      "#fee477",
+      "#fcb94d",
+      "#f47c30",
+      "#d94f1f",
+      "#9f2d16"
+    ]
+  },
+  "steps": [
+    {
+      "step": "H001",
+      "horizon": 1,
+      "valid_time": "2026-05-16T07:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H001.bin"
+    },
+    {
+      "step": "H002",
+      "horizon": 2,
+      "valid_time": "2026-05-16T08:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H002.bin"
+    },
+    {
+      "step": "H003",
+      "horizon": 3,
+      "valid_time": "2026-05-16T09:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H003.bin"
+    },
+    {
+      "step": "H004",
+      "horizon": 4,
+      "valid_time": "2026-05-16T10:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H004.bin"
+    },
+    {
+      "step": "H005",
+      "horizon": 5,
+      "valid_time": "2026-05-16T11:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H005.bin"
+    },
+    {
+      "step": "H006",
+      "horizon": 6,
+      "valid_time": "2026-05-16T12:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H006.bin"
+    },
+    {
+      "step": "H007",
+      "horizon": 7,
+      "valid_time": "2026-05-16T13:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H007.bin"
+    },
+    {
+      "step": "H008",
+      "horizon": 8,
+      "valid_time": "2026-05-16T14:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H008.bin"
+    },
+    {
+      "step": "H009",
+      "horizon": 9,
+      "valid_time": "2026-05-16T15:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H009.bin"
+    },
+    {
+      "step": "H010",
+      "horizon": 10,
+      "valid_time": "2026-05-16T16:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H010.bin"
+    },
+    {
+      "step": "H011",
+      "horizon": 11,
+      "valid_time": "2026-05-16T17:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H011.bin"
+    },
+    {
+      "step": "H012",
+      "horizon": 12,
+      "valid_time": "2026-05-16T18:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H012.bin"
+    },
+    {
+      "step": "H013",
+      "horizon": 13,
+      "valid_time": "2026-05-16T19:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2714.586669921875,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H013.bin"
+    },
+    {
+      "step": "H014",
+      "horizon": 14,
+      "valid_time": "2026-05-16T20:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H014.bin"
+    },
+    {
+      "step": "H015",
+      "horizon": 15,
+      "valid_time": "2026-05-16T21:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H015.bin"
+    },
+    {
+      "step": "H016",
+      "horizon": 16,
+      "valid_time": "2026-05-16T22:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H016.bin"
+    },
+    {
+      "step": "H017",
+      "horizon": 17,
+      "valid_time": "2026-05-16T23:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H017.bin"
+    },
+    {
+      "step": "H018",
+      "horizon": 18,
+      "valid_time": "2026-05-17T00:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H018.bin"
+    },
+    {
+      "step": "H019",
+      "horizon": 19,
+      "valid_time": "2026-05-17T01:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H019.bin"
+    },
+    {
+      "step": "H020",
+      "horizon": 20,
+      "valid_time": "2026-05-17T02:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H020.bin"
+    },
+    {
+      "step": "H021",
+      "horizon": 21,
+      "valid_time": "2026-05-17T03:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H021.bin"
+    },
+    {
+      "step": "H022",
+      "horizon": 22,
+      "valid_time": "2026-05-17T04:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 10.30804443359375,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H022.bin"
+    },
+    {
+      "step": "H023",
+      "horizon": 23,
+      "valid_time": "2026-05-17T05:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2637.301025390625,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H023.bin"
+    },
+    {
+      "step": "H024",
+      "horizon": 24,
+      "valid_time": "2026-05-17T06:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H024.bin"
+    },
+    {
+      "step": "H025",
+      "horizon": 25,
+      "valid_time": "2026-05-17T07:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H025.bin"
+    },
+    {
+      "step": "H026",
+      "horizon": 26,
+      "valid_time": "2026-05-17T08:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H026.bin"
+    },
+    {
+      "step": "H027",
+      "horizon": 27,
+      "valid_time": "2026-05-17T09:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H027.bin"
+    },
+    {
+      "step": "H028",
+      "horizon": 28,
+      "valid_time": "2026-05-17T10:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H028.bin"
+    },
+    {
+      "step": "H029",
+      "horizon": 29,
+      "valid_time": "2026-05-17T11:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H029.bin"
+    },
+    {
+      "step": "H030",
+      "horizon": 30,
+      "valid_time": "2026-05-17T12:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H030.bin"
+    },
+    {
+      "step": "H031",
+      "horizon": 31,
+      "valid_time": "2026-05-17T13:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H031.bin"
+    },
+    {
+      "step": "H032",
+      "horizon": 32,
+      "valid_time": "2026-05-17T14:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H032.bin"
+    },
+    {
+      "step": "H033",
+      "horizon": 33,
+      "valid_time": "2026-05-17T15:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H033.bin"
+    },
+    {
+      "step": "H034",
+      "horizon": 34,
+      "valid_time": "2026-05-17T16:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H034.bin"
+    },
+    {
+      "step": "H035",
+      "horizon": 35,
+      "valid_time": "2026-05-17T17:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H035.bin"
+    },
+    {
+      "step": "H036",
+      "horizon": 36,
+      "valid_time": "2026-05-17T18:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H036.bin"
+    },
+    {
+      "step": "H037",
+      "horizon": 37,
+      "valid_time": "2026-05-17T19:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2248.970703125,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H037.bin"
+    },
+    {
+      "step": "H038",
+      "horizon": 38,
+      "valid_time": "2026-05-17T20:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H038.bin"
+    },
+    {
+      "step": "H039",
+      "horizon": 39,
+      "valid_time": "2026-05-17T21:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H039.bin"
+    },
+    {
+      "step": "H040",
+      "horizon": 40,
+      "valid_time": "2026-05-17T22:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H040.bin"
+    },
+    {
+      "step": "H041",
+      "horizon": 41,
+      "valid_time": "2026-05-17T23:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H041.bin"
+    },
+    {
+      "step": "H042",
+      "horizon": 42,
+      "valid_time": "2026-05-18T00:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H042.bin"
+    },
+    {
+      "step": "H043",
+      "horizon": 43,
+      "valid_time": "2026-05-18T01:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H043.bin"
+    },
+    {
+      "step": "H044",
+      "horizon": 44,
+      "valid_time": "2026-05-18T02:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H044.bin"
+    },
+    {
+      "step": "H045",
+      "horizon": 45,
+      "valid_time": "2026-05-18T03:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H045.bin"
+    },
+    {
+      "step": "H046",
+      "horizon": 46,
+      "valid_time": "2026-05-18T04:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 1.3279629945755005,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H046.bin"
+    },
+    {
+      "step": "H047",
+      "horizon": 47,
+      "valid_time": "2026-05-18T05:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2425.27001953125,
+      "max_sunshine_fraction_pct": 99.33989715576172,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H047.bin"
+    },
+    {
+      "step": "H048",
+      "horizon": 48,
+      "valid_time": "2026-05-18T06:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H048.bin"
+    },
+    {
+      "step": "H049",
+      "horizon": 49,
+      "valid_time": "2026-05-18T07:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H049.bin"
+    },
+    {
+      "step": "H050",
+      "horizon": 50,
+      "valid_time": "2026-05-18T08:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H050.bin"
+    },
+    {
+      "step": "H051",
+      "horizon": 51,
+      "valid_time": "2026-05-18T09:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H051.bin"
+    },
+    {
+      "step": "H052",
+      "horizon": 52,
+      "valid_time": "2026-05-18T10:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H052.bin"
+    },
+    {
+      "step": "H053",
+      "horizon": 53,
+      "valid_time": "2026-05-18T11:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H053.bin"
+    },
+    {
+      "step": "H054",
+      "horizon": 54,
+      "valid_time": "2026-05-18T12:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H054.bin"
+    },
+    {
+      "step": "H055",
+      "horizon": 55,
+      "valid_time": "2026-05-18T13:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H055.bin"
+    },
+    {
+      "step": "H056",
+      "horizon": 56,
+      "valid_time": "2026-05-18T14:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H056.bin"
+    },
+    {
+      "step": "H057",
+      "horizon": 57,
+      "valid_time": "2026-05-18T15:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H057.bin"
+    },
+    {
+      "step": "H058",
+      "horizon": 58,
+      "valid_time": "2026-05-18T16:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H058.bin"
+    },
+    {
+      "step": "H059",
+      "horizon": 59,
+      "valid_time": "2026-05-18T17:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H059.bin"
+    },
+    {
+      "step": "H060",
+      "horizon": 60,
+      "valid_time": "2026-05-18T18:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H060.bin"
+    },
+    {
+      "step": "H061",
+      "horizon": 61,
+      "valid_time": "2026-05-18T19:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 948.660400390625,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H061.bin"
+    },
+    {
+      "step": "H062",
+      "horizon": 62,
+      "valid_time": "2026-05-18T20:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H062.bin"
+    },
+    {
+      "step": "H063",
+      "horizon": 63,
+      "valid_time": "2026-05-18T21:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H063.bin"
+    },
+    {
+      "step": "H064",
+      "horizon": 64,
+      "valid_time": "2026-05-18T22:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H064.bin"
+    },
+    {
+      "step": "H065",
+      "horizon": 65,
+      "valid_time": "2026-05-18T23:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H065.bin"
+    },
+    {
+      "step": "H066",
+      "horizon": 66,
+      "valid_time": "2026-05-19T00:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H066.bin"
+    },
+    {
+      "step": "H067",
+      "horizon": 67,
+      "valid_time": "2026-05-19T01:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H067.bin"
+    },
+    {
+      "step": "H068",
+      "horizon": 68,
+      "valid_time": "2026-05-19T02:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H068.bin"
+    },
+    {
+      "step": "H069",
+      "horizon": 69,
+      "valid_time": "2026-05-19T03:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H069.bin"
+    },
+    {
+      "step": "H070",
+      "horizon": 70,
+      "valid_time": "2026-05-19T04:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H070.bin"
+    },
+    {
+      "step": "H071",
+      "horizon": 71,
+      "valid_time": "2026-05-19T05:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2378.851806640625,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H071.bin"
+    },
+    {
+      "step": "H072",
+      "horizon": 72,
+      "valid_time": "2026-05-19T06:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H072.bin"
+    },
+    {
+      "step": "H073",
+      "horizon": 73,
+      "valid_time": "2026-05-19T07:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H073.bin"
+    },
+    {
+      "step": "H074",
+      "horizon": 74,
+      "valid_time": "2026-05-19T08:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H074.bin"
+    },
+    {
+      "step": "H075",
+      "horizon": 75,
+      "valid_time": "2026-05-19T09:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H075.bin"
+    },
+    {
+      "step": "H076",
+      "horizon": 76,
+      "valid_time": "2026-05-19T10:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H076.bin"
+    },
+    {
+      "step": "H077",
+      "horizon": 77,
+      "valid_time": "2026-05-19T11:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H077.bin"
+    },
+    {
+      "step": "H078",
+      "horizon": 78,
+      "valid_time": "2026-05-19T12:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H078.bin"
+    },
+    {
+      "step": "H079",
+      "horizon": 79,
+      "valid_time": "2026-05-19T13:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H079.bin"
+    },
+    {
+      "step": "H080",
+      "horizon": 80,
+      "valid_time": "2026-05-19T14:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H080.bin"
+    },
+    {
+      "step": "H081",
+      "horizon": 81,
+      "valid_time": "2026-05-19T15:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H081.bin"
+    },
+    {
+      "step": "H082",
+      "horizon": 82,
+      "valid_time": "2026-05-19T16:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H082.bin"
+    },
+    {
+      "step": "H083",
+      "horizon": 83,
+      "valid_time": "2026-05-19T17:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H083.bin"
+    },
+    {
+      "step": "H084",
+      "horizon": 84,
+      "valid_time": "2026-05-19T18:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3595.622802734375,
+      "max_sunshine_fraction_pct": 99.87841033935547,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H084.bin"
+    },
+    {
+      "step": "H085",
+      "horizon": 85,
+      "valid_time": "2026-05-19T19:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 343.0948486328125,
+      "max_sunshine_fraction_pct": 33.23116683959961,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H085.bin"
+    },
+    {
+      "step": "H086",
+      "horizon": 86,
+      "valid_time": "2026-05-19T20:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H086.bin"
+    },
+    {
+      "step": "H087",
+      "horizon": 87,
+      "valid_time": "2026-05-19T21:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H087.bin"
+    },
+    {
+      "step": "H088",
+      "horizon": 88,
+      "valid_time": "2026-05-19T22:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H088.bin"
+    },
+    {
+      "step": "H089",
+      "horizon": 89,
+      "valid_time": "2026-05-19T23:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H089.bin"
+    },
+    {
+      "step": "H090",
+      "horizon": 90,
+      "valid_time": "2026-05-20T00:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H090.bin"
+    },
+    {
+      "step": "H091",
+      "horizon": 91,
+      "valid_time": "2026-05-20T01:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H091.bin"
+    },
+    {
+      "step": "H092",
+      "horizon": 92,
+      "valid_time": "2026-05-20T02:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H092.bin"
+    },
+    {
+      "step": "H093",
+      "horizon": 93,
+      "valid_time": "2026-05-20T03:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H093.bin"
+    },
+    {
+      "step": "H094",
+      "horizon": 94,
+      "valid_time": "2026-05-20T04:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H094.bin"
+    },
+    {
+      "step": "H095",
+      "horizon": 95,
+      "valid_time": "2026-05-20T05:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2076.813232421875,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H095.bin"
+    },
+    {
+      "step": "H096",
+      "horizon": 96,
+      "valid_time": "2026-05-20T06:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H096.bin"
+    },
+    {
+      "step": "H097",
+      "horizon": 97,
+      "valid_time": "2026-05-20T07:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H097.bin"
+    },
+    {
+      "step": "H098",
+      "horizon": 98,
+      "valid_time": "2026-05-20T08:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H098.bin"
+    },
+    {
+      "step": "H099",
+      "horizon": 99,
+      "valid_time": "2026-05-20T09:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H099.bin"
+    },
+    {
+      "step": "H100",
+      "horizon": 100,
+      "valid_time": "2026-05-20T10:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H100.bin"
+    },
+    {
+      "step": "H101",
+      "horizon": 101,
+      "valid_time": "2026-05-20T11:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H101.bin"
+    },
+    {
+      "step": "H102",
+      "horizon": 102,
+      "valid_time": "2026-05-20T12:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H102.bin"
+    },
+    {
+      "step": "H103",
+      "horizon": 103,
+      "valid_time": "2026-05-20T13:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H103.bin"
+    },
+    {
+      "step": "H104",
+      "horizon": 104,
+      "valid_time": "2026-05-20T14:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H104.bin"
+    },
+    {
+      "step": "H105",
+      "horizon": 105,
+      "valid_time": "2026-05-20T15:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H105.bin"
+    },
+    {
+      "step": "H106",
+      "horizon": 106,
+      "valid_time": "2026-05-20T16:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H106.bin"
+    },
+    {
+      "step": "H107",
+      "horizon": 107,
+      "valid_time": "2026-05-20T17:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H107.bin"
+    },
+    {
+      "step": "H108",
+      "horizon": 108,
+      "valid_time": "2026-05-20T18:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H108.bin"
+    },
+    {
+      "step": "H109",
+      "horizon": 109,
+      "valid_time": "2026-05-20T19:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2209.244873046875,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H109.bin"
+    },
+    {
+      "step": "H110",
+      "horizon": 110,
+      "valid_time": "2026-05-20T20:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H110.bin"
+    },
+    {
+      "step": "H111",
+      "horizon": 111,
+      "valid_time": "2026-05-20T21:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H111.bin"
+    },
+    {
+      "step": "H112",
+      "horizon": 112,
+      "valid_time": "2026-05-20T22:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H112.bin"
+    },
+    {
+      "step": "H113",
+      "horizon": 113,
+      "valid_time": "2026-05-20T23:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H113.bin"
+    },
+    {
+      "step": "H114",
+      "horizon": 114,
+      "valid_time": "2026-05-21T00:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H114.bin"
+    },
+    {
+      "step": "H115",
+      "horizon": 115,
+      "valid_time": "2026-05-21T01:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H115.bin"
+    },
+    {
+      "step": "H116",
+      "horizon": 116,
+      "valid_time": "2026-05-21T02:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H116.bin"
+    },
+    {
+      "step": "H117",
+      "horizon": 117,
+      "valid_time": "2026-05-21T03:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H117.bin"
+    },
+    {
+      "step": "H118",
+      "horizon": 118,
+      "valid_time": "2026-05-21T04:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 0.0,
+      "max_sunshine_fraction_pct": 0.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H118.bin"
+    },
+    {
+      "step": "H119",
+      "horizon": 119,
+      "valid_time": "2026-05-21T05:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 2519.87646484375,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H119.bin"
+    },
+    {
+      "step": "H120",
+      "horizon": 120,
+      "valid_time": "2026-05-21T06:00:00+00:00",
+      "byte_length": 150144,
+      "max_sunshine_duration_s": 3600.0,
+      "max_sunshine_fraction_pct": 100.0,
+      "url": "web_exports/sunshine_maps/icon-ch2/20260516_0600/surface/steps/H120.bin"
+    }
+  ],
+  "source": "cache_sunshine_maps/ch2/20260516_0600/surface/metadata.json"
+}
